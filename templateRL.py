@@ -5,6 +5,7 @@
 import pprint
 import numpy
 import random
+import pydot
 
 # the environment class
 class Environment:
@@ -40,10 +41,20 @@ class Environment:
         # executes an action in a given state
         # and returns a new current state along with its reward and info on whether it's a terminal state
 
-        if random.random > 0.8:
+        if random.random() > 0.9:
             action = random.choice(self.getActions(state))
+        # r = random.random()
+        # if r < 0.1:
+        #     action = 'L'
+        # elif r < 0.2:
+        #     action = 'R'
+        # else:
+        #     action = 'U'
 
         j, i = state
+        # if action not in self.getActions(state):
+        #     return state, self.world[j][i], False
+
         if action == 'U':
             j = j - 1
         if action == 'D':
@@ -69,8 +80,8 @@ class Environment:
         if state in self.obstacles:
             raise Exception("Kak si pa ti sem prisel")
 
-        if state in self.terminalStates:
-            return None
+        # if state in self.terminalStates:
+        #     return []
 
         allActions = {'U': True, 'D': True, 'L': True, 'R': True}
 
@@ -104,6 +115,7 @@ class Agent:
 
         state = e.getStartingState()
 
+        self.S = {}
         self.P = None
         self.U = None
         self.M = {}
@@ -114,22 +126,45 @@ class Agent:
         self.lastAction = None
         self.steps = 0
 
-        for _ in xrange(20):
+        for _ in xrange(50):
+            # random.seed(100)
             print "============= START ===================="
             self.start()
-            # print "Transitions"
-            # pprint.pprint(self.M)
-            # print "Probs"
-            # pprint.pprint(self.M)
             print "Policy"
             self.printPolicy(self.P)
-            # pprint.pprint(self.P)
+            print "Utils"
+            self.printPolicy(self.U)
+            # print "Rewards"
+            # self.printPolicy(self.R)
+            # print "Model"
+            # pprint.pprint(self.M)
+
+        self.transitionGraph()
+
+
+        rHist = []
+        for _ in xrange(100):
+            r = self.executePolicy(self.P)
+            rHist.append(r)
+            # print "Cumulative reward: ", r
+        
+
+        randomP = {s: random.choice(self.e.getActions(s)) for s in self.S}
+
+        rHistR = []
+        for _ in xrange(100):
+            r = self.executePolicy(randomP)
+            rHistR.append(r)
+            # print "Cumulative reward (randomP): ", r
+
+        print "Average reward: ", sum(rHist)/float(len(rHist))
+        print "Average reward (randomP): ", sum(rHistR)/float(len(rHistR))
+
 
     def printPolicy(self, P):
         x = [[x for x in xrange(4)] for x in xrange(3)]
 
         buf = ""
-        # x = numpy.zeros(self.e.width * self.e.height).reshape((self.e.height, self.e.width))
         for j in xrange(self.e.height):
             for i in xrange(self.e.width):
                 buf = buf  + str(P.get((j, i), 'x')) + "\t"
@@ -137,16 +172,46 @@ class Agent:
         
         print buf
 
+    def transitionGraph(self):
+        graph = pydot.Dot()
+
+        nodes = {key: pydot.Node(str(key)) for key, value in self.S.iteritems()}
+
+        for (state, action, newState), prob in self.M.iteritems():
+
+            if state not in nodes:
+                nodes[state] = pydot.Node(str(state))
+            if newState not in nodes:
+                nodes[newState] = pydot.Node(str(newState))
+            graph.add_edge(pydot.Edge(nodes[state], nodes[newState], label= "%s:%.2f" % (action, prob)))
+        graph.write_png("neki.png")
+
+    def executePolicy(self, P):
+
+        state = e.getStartingState()
+        terminal = False
+
+        rewardSum = 0
+
+        while terminal is False:
+            action = P.get(state)
+            state, reward, terminal = e.do(state, action)
+            rewardSum = rewardSum + reward
+
+        return rewardSum
+
+
     def start(self):
         state = e.getStartingState()
         self.lastAction = random.choice(e.getActions(state))
 
         terminal = False
 
+        self.S[state] = 1
+
+        utilHist = {}
+
         while terminal is False:
-            print "I am in state ", state
-            # print "State:", state
-            # percept = (state, action, newState, reward)
             action = self.lastAction
 
             newState, reward, terminal = e.do(state, action)
@@ -160,17 +225,19 @@ class Agent:
 
             if terminal is True:
                 self.steps = 0
-                print "Finished in", newState
-                # self.precepts = []
                 return
+            else:
+                self.S[newState] = self.S.get(newState, 0) + 1
 
             self.lastAction = self.performanceElement(newState)
 
-            # print newState
             state = newState
-            # self.gamma = self.gamma * self.gamma
             self.steps = self.steps + 1
-
+            # for k, v in self.U.iteritems():
+            #     if k in utilHist:
+            #         utilHist[k].append(v)
+            #     else:
+            #         utilHist[k] = [v]
 
     def updateActiveModel(self, M, precepts, lastAction):
         seen = {}
@@ -185,33 +252,20 @@ class Agent:
         for (state, action, newState, _) in precepts:
             transitions[(state, action, newState)] = transitions.get((state, action, newState), 0) + 1
 
-        # print "======================="
-        # pprint.pprint(precepts)
-        # pprint.pprint(seen)
-        # pprint.pprint(transitions)
-
         for key, value in transitions.iteritems():
             state, action, newState = key
 
             if seen.get((state, action)) is not None:
                 newM[key] = float(value)/seen[(state, action)]
 
-        # pprint.pprint(newM)
-        # print "======================="
-
         return newM
 
 
     def policyIteration(self, M, R):
 
-        states = set()
-        for state, _, _ in M.keys():
-            states.add(state)
+        states = self.S.keys()
 
-        # print "All known states", len(states)
-
-        U = {s: 0.0 for s in states}
-
+        U = R.copy()
         P = {s: random.choice(self.e.getActions(s)) for s in states}
 
         while True:
@@ -221,38 +275,47 @@ class Agent:
                 a = argmax(self.e.getActions(s), lambda a: self._expected_utility(a, s, U, M))
 
                 if a != P.get(s):
-                    # print "Best move in ", s ," is ", a
                     P[s] = a
                     unchanged = False
 
                 if unchanged is True:
+                    self.U = U
                     return P
 
-
-    def valueDetermination(self, P, U, M, R, k = 20):
+    def valueDetermination(self, P, U, M, R, k = 30):
 
         def getPossibleOutcomes(s, a):
-            return [(action, newState, prob) for (state, action, newState), prob in M.iteritems() if state == s and action == a]
+            outcomes  = [(newState, prob) for (state, action, newState), prob in M.iteritems() if state == s and action == a]
+            assert (sum([prob for _, prob in outcomes]) - 1) < 0.001 or len(outcomes) == 0
+            return outcomes
 
-        Ui = U.copy()
 
-        for i in range(k):
+        Ne = 3
+        Rplus = 1
+
+        for i in xrange(k):
             for state in P.keys():
-                Ui[state] = R.get(state, 0) + self.gamma * sum(prob * U.get(newState, 0) for action, newState, prob in getPossibleOutcomes(state, P.get(state)))
-                # print "U[", state, "] = ", Ui[state]
+                if self.S.get(state, 0) > Ne:
+                    # a = argmax(self.e.getActions(state), lambda a: self._expected_utility(a, state, U, M))
+                    a = P.get(state)
+                    outcomes = getPossibleOutcomes(state, a)
+                    est = self.gamma * sum(prob * U[newState] for newState, prob in outcomes)
+                else:
+                    est = Rplus
+                U[state] = R.get(state, 0) + est
 
-        for k, v in Ui.iteritems():
-            print k, v, self.gamma
-
-        return Ui
+        return U
 
     def _expected_utility(self, a, s, U, M):
 
-        return sum([prob * U.get(newState, 1) for (state, action, newState), prob in M.iteritems() if state == s and action == a])
+        util = sum([prob * U[newState] for (state, action, newState), prob in M.iteritems() if state == s and action == a])
+
+        return util
 
 
     def performanceElement(self, state):
-        if random.random() > 1 - (1.0 / (self.steps + 1)) or self.P.get(state) is None:
+
+        if random.random() > 1 - (1.0 / (self.steps + 1)/100) or self.P.get(state) is None:
             return random.choice(e.getActions(state))
         else:
             return self.P[state]
@@ -272,7 +335,7 @@ def argmax(args, func):
 
 if __name__ == "__main__":
 
-    random.seed(100)
+    # random.seed(100)
     e = Environment()
 
     a = Agent(e)
