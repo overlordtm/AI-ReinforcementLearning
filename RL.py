@@ -15,8 +15,8 @@ class Environment:
 
         self.obstacles = [(1,1)]
         self.terminalStates = [(0, 3), (1, 3)]
-        self.width = 4
-        self.height = 3
+        self.width = 8 #4
+        self.height = 10#3
         self.world = numpy.zeros(self.width * self.height).reshape((self.height, self.width))
 
         for j in range(self.height):
@@ -102,9 +102,9 @@ class Environment:
 
 class Model:
 
-    def __init__(self, startingState):
+    def __init__(self):
 
-        self.S = {startingState: 1}
+        self.S = {}
         self.precepts = []
         self.A = set()
         self.R = {}
@@ -116,6 +116,7 @@ class Model:
         (state, action, newState, reward, terminal) = precept
         # self.precepts.append(precept)
         self.A.add(action)
+
         self.S[newState] = self.S.get(newState, 0) + 1
         self.Q[(state, action)] = self.Q.get((state, action), 0) + 1
         self.Z[(state, action, newState)] = self.Z.get((state, action, newState), 0) + 1
@@ -183,11 +184,8 @@ class Agent:
     def __init__(self, e):
         # initialization of the agent
 
-        state = e.getStartingState()
+        self.model = Model()
 
-        self.model = Model(state)
-
-        self.S = {}
         self.P = None
         self.e = e
         self.gamma = 0.9
@@ -195,24 +193,20 @@ class Agent:
         self.steps = 0
 
         for _ in xrange(10):
-            # print "============= START ===================="
+            print "==== Learning step %d ====" % self.steps
             self.start()
 
-        print "Policy"
-        self.printPolicy(self.P)
-
         rHist = []
-        for _ in xrange(100):
-            r = self.executePolicy(self.P)
+        for s in xrange(1):
+            r, p = self.executePolicy(self.P)
             rHist.append(r)
+            # print p
 
         rHistR = []
         print "reward (max/min/avg): ", max(rHist), min(rHist), sum(rHist)/float(len(rHist))
 
 
     def printPolicy(self, P):
-        # x = [[x for x in xrange(4)] for x in xrange(3)]
-
         buf = ""
         for j in xrange(self.e.height):
             for i in xrange(self.e.width):
@@ -222,8 +216,6 @@ class Agent:
         print buf
 
     def printUtility(self, U):
-        # x = [[x for x in xrange(4)] for x in xrange(3)]
-
         buf = ""
         for j in xrange(self.e.height):
             for i in xrange(self.e.width):
@@ -236,28 +228,36 @@ class Agent:
         
         print buf
 
+    def comparePolicy(self, P1, P2):
+        norm = 0
+        for k in P1.keys():
+            if P1.get(k) != P2.get(k):
+                norm = norm + 1
+        return norm
+
     def executePolicy(self, P):
 
         state = e.getStartingState()
         terminal = False
+        path = [state]
 
         rewardSum = 0
 
         while terminal is False:
-            action = P.get(state)
-            state, reward, terminal = e.do(state, action)
+            state, reward, terminal = e.do(state, P.get(state))
+            path.append(state)
             rewardSum = rewardSum + reward
 
-        return rewardSum
+        return rewardSum, path
 
 
     def start(self):
-        state = e.getStartingState()
+
+        state = self.e.getStartingState()
         self.lastAction = random.choice(e.getActions(state))
 
         terminal = False
-
-        self.gamma = 0.99
+        self.gamma = 0.6
         self.steps = 0
 
         utilHist = {}
@@ -280,47 +280,44 @@ class Agent:
 
             state = newState
             self.steps = self.steps + 1
+            # self.gamma = self.gamma * self.gamma
 
     def policyIteration(self, model):
 
         U = {s: 0 for s in model.knownStates()}
         P = {s: random.choice(self.e.getActions(s)) for s in model.knownStates()}
 
-        assert len(U) == len(P)
-
         converged = False
         while converged is False:
             converged = True
-
-            U1 = self.valueDetermination(P, U, model)
-
+            U = self.valueDetermination(P, U, model)
             for s in P.keys():
-                a = argmax(self.e.getActions(s), lambda a: expected_utility(a, s, U1, model))
+                a = argmax(self.e.getActions(s), lambda a: expected_utility(a, s, U, model))
                 if a != P.get(s):
                     P[s] = a
                     converged = False
 
-            U = U1
-
-        # pprint.pprint(U)
-        print "==== Step: %d ========" % self.steps
-        self.printPolicy(P)
-        self.printUtility(U)
+        print "==== Step: %d ====" % self.steps
+        # self.printPolicy(P)
+        # self.printUtility(U)
         return P
 
     def valueDetermination(self, P, U, model, k = 10):
 
-        Ne = 3
+        Ne = 2
         Rplus = 1
+
+        R = lambda s: model.avgReward(state) or 0
 
         for i in xrange(k):
             for state in P.keys():
                 if model.visits(state) > Ne:
+                    assert self.gamma > 0 and self.gamma < 1
                     est = self.gamma * sum(prob * U[newState] for newState, prob in model.getTransitions(state, P.get(state)))
                 else:
                     est = Rplus
-                R = model.avgReward(state) or 0
-                U[state] = R + est
+
+                U[state] = R(state) + est
 
         return U
 
