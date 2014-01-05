@@ -5,7 +5,7 @@
 import pprint
 import numpy
 import random
-import pydot
+#import pydot
 
 # the environment class
 class Environment:
@@ -139,7 +139,7 @@ class Agent:
             # print "Model"
             # pprint.pprint(self.M)
 
-        self.transitionGraph()
+        #self.transitionGraph()
 
 
         rHist = []
