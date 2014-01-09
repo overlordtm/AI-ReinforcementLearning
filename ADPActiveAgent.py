@@ -1,5 +1,4 @@
 import pprint
-import numpy
 import random
 import time
 
