@@ -126,39 +126,39 @@ class Agent:
         self.lastAction = None
         self.steps = 0
 
-        for _ in xrange(50):
+        for _ in xrange(5000):
             # random.seed(100)
-            print "============= START ===================="
             self.start()
             print "Policy"
-            self.printPolicy(self.P)
-            print "Utils"
-            self.printPolicy(self.U)
+            print self.P
+            # self.printPolicy(self.P)
+            # print "Utils"
+            # self.printPolicy(self.U)
             # print "Rewards"
             # self.printPolicy(self.R)
-            # print "Model"
-            # pprint.pprint(self.M)
+            #print "Model"
+            #pprint.pprint(self.M)
 
         #self.transitionGraph()
 
 
-        rHist = []
-        for _ in xrange(100):
-            r = self.executePolicy(self.P)
-            rHist.append(r)
-            # print "Cumulative reward: ", r
+        # rHist = []
+        # for _ in xrange(100):
+        #     r = self.executePolicy(self.P)
+        #     rHist.append(r)
+        #     print "Cumulative reward: ", r
         
 
-        randomP = {s: random.choice(self.e.getActions(s)) for s in self.S}
-
-        rHistR = []
-        for _ in xrange(100):
-            r = self.executePolicy(randomP)
-            rHistR.append(r)
-            # print "Cumulative reward (randomP): ", r
-
-        print "Average reward: ", sum(rHist)/float(len(rHist))
-        print "Average reward (randomP): ", sum(rHistR)/float(len(rHistR))
+        # randomP = {s: random.choice(self.e.getActions(s)) for s in self.S}
+        #
+        # rHistR = []
+        # for _ in xrange(100):
+        #     r = self.executePolicy(randomP)
+        #     rHistR.append(r)
+        #     # print "Cumulative reward (randomP): ", r
+        #
+        # print "Average reward: ", sum(rHist)/float(len(rHist))
+        # print "Average reward (randomP): ", sum(rHistR)/float(len(rHistR))
 
 
     def printPolicy(self, P):
@@ -169,7 +169,7 @@ class Agent:
             for i in xrange(self.e.width):
                 buf = buf  + str(P.get((j, i), 'x')) + "\t"
             buf = buf + "\n"
-        
+
         print buf
 
     def transitionGraph(self):
@@ -334,9 +334,8 @@ def argmax(args, func):
     return best
 
 if __name__ == "__main__":
-
-    # random.seed(100)
-    e = Environment()
+    from BrickBreakerEnv import BrickBreakerEnv
+    e = BrickBreakerEnv()
 
     a = Agent(e)
     # pprint.pprint(e.world)

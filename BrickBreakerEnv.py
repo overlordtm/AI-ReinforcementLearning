@@ -1,6 +1,7 @@
 from templateRL import Environment
 
 import random
+import box
 
 class BrickBreakerEnv(Environment):
 
@@ -8,55 +9,54 @@ class BrickBreakerEnv(Environment):
     Actions: +5, +2, -6,...
     """
     def __init__(self):
-        self.move_step = 1
-        self.pad_pos = 0
-        self.ball_pos = [0, 0]
-        self.ball.left = 0
-        self.ball.top = 0
-        self.world_width = 12
-        self.world_height = 12
-        self.penalty = -0.04
+
+        self.world_width = 6
+        self.world_height = 6
+        self.penalty = 0
         self.brick_reward = 1
-        self.win_reward = 2
-        self._create_bricks()
-        self.bricks_left = self.world_width
-        self.states = [i for i in xrange(-(self.world_width/2), (self.world_width/2) + 1)]
-        self.left_terminal_state = self.states[0]
-        self.right_terminal_state = self.states[-1]
+        self.pad_reward = 1
+        self.win_reward = 100
+        self.game_over_penalty = -100
+
+        self.post_init()
+
+    def post_init(self):
+        if self.world_width % 2 == 0:
+            self.world_width = self.world_width + 1
+
+        self.box_model = box.BoxModel(0, self.world_width, 0, self.world_height)
+        self.states = [i for i in xrange(self.world_width)]
+        self.bricks_left = self.box_model.bricks.count(1)
+        self.pad_pos = self.world_width/2
 
     def getStartingState(self):
         return self.pad_pos
 
     def do(self, state, action):
-        newState = self._get_new_state(action, state)
-        isTerminal = self._is_terminal(newState)
-        hit_brick = self._simulate_ball(action, state, newState, isTerminal)
-        reward = self._get_reward(isTerminal, hit_brick)
+        newState = action
+        self.box_model.movePad(newState)
+        x, _, _, _ = self.box_model.bounce()
+        hit_brick = self.box_model.bricks.count(1) < self.bricks_left
+        if hit_brick:
+            self.bricks_left = self.box_model.bricks.count(1)
+
+        reward = self._get_reward(hit_brick)
         self.pad_pos = newState
-        return newState, reward, isTerminal
+        print "state=", state, ", newState=", newState, ", reward=", reward, ", ball=", int(x)
+        return newState, reward, reward == self.win_reward or reward == self.game_over_penalty
 
     def _is_terminal(self, state):
         return self.left_terminal_state == state or self.right_terminal_state == state
 
-    def _get_reward(self, is_terminal, hit_brick):
+    def _get_reward(self, hit_brick):
         reward = self.penalty
         if hit_brick:
             reward = self.brick_reward
-        if is_terminal:
-            reward = self.win_reward
+        if self.box_model.checkPad() is False:
+            reward = self.game_over_penalty
+        if self.box_model.checkPad() is True:
+            reward = self.pad_reward
         return reward
-
-    def _get_new_state(self, steps, state):
-        new_pos = self.pad_pos + steps
-
-        if new_pos in self.states:
-            return new_pos
-
-        if new_pos > self.right_terminal_state:
-            return self.right_terminal_state
-
-        if new_pos < self.left_terminal_state:
-            return self.left_terminal_state
 
     def _create_bricks(self):
         self.bricks = []
@@ -67,20 +67,19 @@ class BrickBreakerEnv(Environment):
     def getActions(self, state):
         return self.states
 
-
 if __name__ == '__main__':
     env = BrickBreakerEnv()
     s = env.getStartingState()
     actions = env.getActions(s)
     isTerminal = False
     random.seed(100)
+    a = random.choice(actions)
     for i in xrange(10):
-        a = random.choice(actions)
-        if i == 5:
-            print ""
         newState, reward, isTerminal = env.do(s, a)
         print s, '--', a, '-->', newState, reward, isTerminal
         s = newState
+        x, _, _, _ = env.box_model.ball
+        a = int(x)
 
     print "Starting state: ", s
     print "Actions: ", a
