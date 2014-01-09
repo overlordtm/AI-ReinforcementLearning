@@ -190,7 +190,7 @@ class ADPActiveAgent(Agent):
         self.lastAction = random.choice(self.e.getActions(state))
 
         terminal = False
-        self.gamma = 0.6
+        self.gamma = 0.9
         self.steps = 0
 
         utilHist = {}
@@ -217,20 +217,25 @@ class ADPActiveAgent(Agent):
     def policyIteration(self, model):
 
         U = {s: 0 for s in model.knownStates()}
+        
         P = {s: random.choice(self.e.getActions(s)) for s in model.knownStates()}
 
         converged = False
-        steps = 0
+        step = 0
         while converged is False:
-            steps = steps + 1
+            # print "Policy iteration step", step
+            if step > 250:
+                print "Warning: policy iteration max steps reached"
+                break
+            step = step + 1
             converged = True
-            U = self.valueDetermination(P, U, model, 3)
+            U = self.valueDetermination(P, U, model)
             for s in P.keys():
                 a = argmax(self.e.getActions(s), lambda a: expected_utility(a, s, U, model))
                 if a != P.get(s):
                     P[s] = a
                     converged = False
-        print "convergence took", steps
+            # print "Policy iteration done"
         return P
 
     def valueDetermination(self, P, U, model, k = 10):

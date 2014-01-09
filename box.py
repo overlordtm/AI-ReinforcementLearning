@@ -21,6 +21,7 @@ class BoxModel:
 
 	def _normalizeVelocity(self):
 		x, y, _vx, _vy = self.ball
+		print "normalizing", _vx, _vy
 		# nromalize
 		vx = _vx/max(abs(_vx), abs(_vy))
 		vy = _vy/max(abs(_vx), abs(_vy))
@@ -47,47 +48,51 @@ class BoxModel:
 		while True:
 			x, y, vx, vy = ball
 			count = count + 1
-			assert count < 100, ball
-			assert box_min_x < x < box_max_x, ball
+			assert count < 30, ball
+			assert box_min_x <= x <= box_max_x, ball
 			assert box_min_y <= y <= box_max_y, ball
 
 			if vx < 0:
 				newy = vy/vx * (box_min_x - x) + y
 				# assert (box_min_x - x) != 0
-				if box_min_y < newy < box_max_y:
+				if box_min_y <= newy <= box_max_y:
 					ball = (box_min_x+0.01, newy, -vx, vy)
 					# print "hit left", ball
-				elif newy >= box_max_y:
+				elif newy > box_max_y:
 					k = vy/vx
 					x = (box_max_y - y) / k + x
 					ball = (x+0.01, box_max_y, vx, -vy)
 					# print "hit top", ball
 					brickHit, self.checkBrickHit(ball)
-				elif newy <= box_min_y:
+				elif newy < box_min_y:
 					k = vy/vx
 					x = (box_min_y - y) / k + x
 					ball = (x+0.01, box_min_y, vx, -vy)
 					# print "hit bottom", ball
 					break
+				else:
+					assert False, "kaj naj naredim?"
 
 			if vx > 0:
 				newy = vy/vx * (box_max_x - x) + y
 				# assert (box_max_x - x) != 0
-				if box_min_y < newy < box_max_y:
+				if box_min_y <= newy <= box_max_y:
 					ball = (box_max_x-0.01, newy, -vx, vy)
 					# print "hit right", ball
-				elif newy >= box_max_y:
+				elif newy > box_max_y:
 					k = vy/vx
 					x = (box_max_y - y) / k + x
 					ball = (x-0.01, box_max_y, vx, -vy)
 					# print "hit top", ball
 					brickHit = self.checkBrickHit(ball)
-				elif newy <= box_min_y:
+				elif newy < box_min_y:
 					k = vy/vx
 					x = (box_min_y - y) / k + x
 					ball = (x-0.01, box_min_y, vx, -vy)
 					# print "hit bottom", ball
 					break
+				else:
+					assert False, "kaj naj naredim?"
 
 			if vx == 0:
 				brickHit = self.checkBrickHit(ball)

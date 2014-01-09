@@ -12,7 +12,7 @@ class BrickBreakerEnv(Environment):
     def __init__(self, bricks = 5, lives = 3):
         self.origLives = lives
         self.lives = lives
-        self.maxSteps = 1000000
+        self.maxSteps = 1000
         self.steps = 0
         minx = 0
         maxx = bricks
@@ -34,7 +34,12 @@ class BrickBreakerEnv(Environment):
 
         _, _, vx, vy = self.box.ball
 
-        return (self.box.pad, round(float(vy)/vx, 1), tuple(self.box.bricks))
+        if vx != 0:
+            k = round(float(vy)/vx, 1)
+        else:
+            k = None
+
+        return (self.box.pad, k, tuple(self.box.bricks))
 
     def do(self, state, action):
 
@@ -44,16 +49,16 @@ class BrickBreakerEnv(Environment):
         pad, corr = action
 
         if corr == '<<':
-            vx = vx - 1.5
+            vx = vx - 0.3
 
         if corr == '<':
-            vx = vx - 0.5
+            vx = vx - 0.05
 
         if corr == '>':
-            vx = vx + 0.5
+            vx = vx + 0.05
 
         if corr == '>>':
-            vx = vx + 1.5
+            vx = vx + 0.3
 
         # delta = math.atan(action - self.box.pad) + (random.random() - 0.5)
         # if random.random() > 0.8:
@@ -65,10 +70,10 @@ class BrickBreakerEnv(Environment):
 
         self.printStatus()
         isTerminal = False
-        reward = -0.1
+        reward = 0
         if hit is True:
             print "Brick hit", self.box.bricks
-            reward = 1
+            reward = 3
 
         if sum(self.box.bricks) == 0:
             print "You won", self.box.bricks
@@ -98,7 +103,12 @@ class BrickBreakerEnv(Environment):
         
         _, _, vx, vy = self.box.ball
 
-        newState = (self.box.pad, round(float(vy)/vx, 1), tuple(self.box.bricks))
+        if vx != 0:
+            k = round(float(vy)/vx, 1)
+        else:
+            k = None
+
+        newState = (self.box.pad, k, tuple(self.box.bricks))
         return newState, reward, isTerminal
 
     def getActions(self, state):
@@ -110,8 +120,8 @@ class BrickBreakerEnv(Environment):
         pad = [' ' for _ in self.box.bricks]
 
         x, _, _, _ = self.box.ball
-        assert 0 <= int(x) < len(ball), x
-        ball[int(x)] = '*'
+        assert 0 <= int(x) <= len(ball), x
+        ball[min(int(x), len(ball)-1)] = '*'
         pad[int(self.box.pad)] = '_'
 
         for i in range(len(self.box.bricks)):
