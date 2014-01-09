@@ -68,28 +68,28 @@ class BrickBreakerEnv(Environment):
         self.box.pad = pad
         hit = self.box.bounce()
 
-        self.printStatus()
+        # self.printStatus()
         isTerminal = False
         reward = 0
         if hit is True:
-            print "Brick hit", self.box.bricks
+            # print "Brick hit", self.box.bricks
             reward = 3
 
         if sum(self.box.bricks) == 0:
-            print "You won", self.box.bricks
+            # print "You won", self.box.bricks
             isTerminal = True
             self.reset()
             reward = 10
 
         if self.box.checkPad() is False:
-            print "Ball missed (lives left: %d)" % self.lives
+            # print "Ball missed (lives left: %d)" % self.lives
             # then you missed the ball
             self.lives = self.lives - 1
             reward = -1
             isTerminal = False
 
         if self.lives < 1:
-            print "You died"
+            # print "You died"
             reward = -10
             isTerminal = True
             self.reset()

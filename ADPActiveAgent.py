@@ -84,48 +84,19 @@ class Model:
 
 
 class ADPActiveAgent(Agent):
-    def __init__(self, e):
+    def __init__(self, e, gamma = 0.9, Rplus = 1, Ne = 2, maxPolicyIter = 1000):
         # initialization of the agent
 
         self.model = Model()
 
         self.P = None
         self.e = e
-        self.gamma = 0.7
+        self.gamma = gamma
         self.lastAction = None
         self.steps = 0
-        self.Rplus = 1
-        self.Ne = 3
-
-
-    # def printPolicy(self, P):
-    #     buf = ""
-    #     for j in xrange(self.e.height):
-    #         for i in xrange(self.e.width):
-    #             buf = buf  + str(P.get((j, i), 'x')) + "\t"
-    #         buf = buf + "\n"
-        
-    #     print buf
-
-    # def printUtility(self, U):
-    #     buf = ""
-    #     for j in xrange(self.e.height):
-    #         for i in xrange(self.e.width):
-    #             if (j, i) in U:
-    #                 u = "%.2f" % U[(j, i)]
-    #             else:
-    #                 u = "x"
-    #             buf = buf  + u + "\t"
-    #         buf = buf + "\n"
-        
-    #     print buf
-
-    # def comparePolicy(self, P1, P2):
-    #     norm = 0
-    #     for k in P1.keys():
-    #         if P1.get(k) != P2.get(k):
-    #             norm = norm + 1
-    #     return norm
+        self.Rplus = Rplus
+        self.Ne = Ne
+        self.maxPolicyIter = maxPolicyIter
 
     def executePolicy(self):
 
@@ -139,7 +110,7 @@ class ADPActiveAgent(Agent):
 
         count = 0
         while terminal is False:
-            if count > 100:
+            if count > 500:
                 print "Infinite loop detected"
                 break
             action = P.get(state)
@@ -189,7 +160,6 @@ class ADPActiveAgent(Agent):
         self.lastAction = random.choice(self.e.getActions(state))
 
         terminal = False
-        self.gamma = 0.9
         self.steps = 0
 
         utilHist = {}
@@ -211,7 +181,6 @@ class ADPActiveAgent(Agent):
 
             state = newState
             self.steps = self.steps + 1
-            # self.gamma = self.gamma * self.gamma
 
     def policyIteration(self, model):
 
@@ -223,7 +192,7 @@ class ADPActiveAgent(Agent):
         step = 0
         while converged is False:
             # print "Policy iteration step", step
-            if step > 250:
+            if step > self.maxPolicyIter:
                 print "Warning: policy iteration max steps reached"
                 break
             step = step + 1
@@ -262,11 +231,9 @@ class ADPActiveAgent(Agent):
     def performanceElement(self, state):
 
         if random.random() > 0.9:
-            action = random.choice(self.e.getActions(state))
+            return random.choice(self.e.getActions(state))
         else:
-            action = self.P.get(state) or random.choice(self.e.getActions(state))
-        print action
-        return action
+            return self.P.get(state) or random.choice(self.e.getActions(state))
 
 def expected_utility(a, s, U, model):
     return sum([prob * U[newState] for newState, prob in model.getTransitions(s, a)])

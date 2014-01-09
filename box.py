@@ -21,7 +21,7 @@ class BoxModel:
 
 	def _normalizeVelocity(self):
 		x, y, _vx, _vy = self.ball
-		print "normalizing", _vx, _vy
+		# print "normalizing", _vx, _vy
 		# nromalize
 		vx = _vx/max(abs(_vx), abs(_vy))
 		vy = _vy/max(abs(_vx), abs(_vy))
