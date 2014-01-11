@@ -1,16 +1,16 @@
-from brickBreakerEnv import BrickBreakerEnv
-from ADPActiveAgent import ADPActiveAgent
+from environment.brickBreaker import BrickBreakerEnv
+from agent.ADPAgent import ADPActiveAgent
 from mazeEnv import MazeEnv
 
 import pprint
 
 if __name__ == "__main__":
-	# env = MazeEnv()
-	env = BrickBreakerEnv(5)
+	#env = MazeEnv()
+	env = BrickBreakerEnv(3)
 	agent = ADPActiveAgent(env, maxPolicyIter=1000)
 
 
-	agent.train(10)
+	agent.train(20)
 
 	print "=== Policy ==="
 	pprint.pprint(agent.P)
