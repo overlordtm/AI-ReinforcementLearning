@@ -28,14 +28,15 @@ class BoxModel:
         x, y, _vx, _vy = self.ball
         # print "normalizing", _vx, _vy
         # nromalize
-        vx = _vx/max(abs(_vx), abs(_vy))
-        vy = _vy/max(abs(_vx), abs(_vy))
+        vx = _vx/min(abs(_vx), abs(_vy))
+        vy = _vy/min(abs(_vx), abs(_vy))
         # ensure normalized speed
-        assert -1 <= vx <= 1, self.ball
-        assert -1 <= vy <= 1, self.ball
+        # assert -1 <= vx <= 1, self.ball
+        # assert -1 <= vy <= 1, self.ball
         self.ball = (x, y, vx, vy)
 
     def bounce(self):
+
         box_min_x, box_max_x, box_min_y, box_max_y = self.box
         self._normalizeVelocity()
         x, y, vx, vy = self.ball
@@ -167,8 +168,6 @@ class BrickBreakerEnv(Environment):
         actions = ['<', '.', '>']
         self.actions = [(i, d) for i in xrange(int(minx), int(maxx)) for d in actions]
 
-        print self.actions
-
     def reset(self):
         self.lives = self.origLives
         self.steps = self.maxSteps
@@ -177,15 +176,8 @@ class BrickBreakerEnv(Environment):
     def getStartingState(self):
 
         _, _, vx, vy = self.box.ball
-
-        if vx != 0:
-            k = round(float(vy)/vx, 1)
-        else:
-            k = None
-
-        assert -1 <= vx <= 1
-
-        return (self.box.pad, round(vx, 1))
+        # assert -1 <= vx <= 1
+        return (self.box.pad, vx > 0, tuple(self.box.bricks))
 
     def do(self, state, action):
 
@@ -194,32 +186,23 @@ class BrickBreakerEnv(Environment):
 
         pad, corr = action
 
-        if corr == '<<':
-            vx = vx - 0.3
-
         if corr == '<':
-            vx = vx - 0.1
+            vx = vx - 0.4
 
         if corr == '>':
-            vx = vx + 0.1
-
-        if corr == '>>':
-            vx = vx + 0.3
-
-        # delta = math.atan(action - self.box.pad) + (random.random() - 0.5)
-        # if random.random() > 0.8:
-        #     vx = vx + (random.random() - 0.5)
+            vx = vx + 0.4
 
         self.box.ball = (x, y, vx, vy)
         self.box.pad = pad
+
         hit = self.box.bounce()
 
         # self.printStatus()
         isTerminal = False
-        reward = 0
+        reward = -0.1
         if hit is True:
             # print "Brick hit", self.box.bricks
-            reward = 3
+            reward = 0.1
 
         if sum(self.box.bricks) == 0:
             # print "You won", self.box.bricks
@@ -231,23 +214,15 @@ class BrickBreakerEnv(Environment):
             # print "Ball missed (lives left: %d)" % self.lives
             # then you missed the ball
             self.lives = self.lives - 1
-            reward = -1
-            isTerminal = False
-
-        if self.lives < 1:
-            # print "You died"
             reward = -10
             isTerminal = True
-            self.reset()
 
         _, _, vx, vy = self.box.ball
 
-        if vx != 0:
-            k = round(float(vy)/vx, 1)
-        else:
-            k = None
+        if isTerminal is False:
+            assert self.box.checkPad() is True
 
-        newState = (self.box.pad, round(vx, 1))
+        newState = (self.box.pad, vx > 0, tuple(self.box.bricks))
         return newState, reward, isTerminal
 
     def getActions(self, state):
