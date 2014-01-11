@@ -10,7 +10,7 @@ if __name__ == "__main__":
 	agent = ADPActiveAgent(env, maxPolicyIter=1000)
 
 
-	agent.train(20)
+	agent.train(10)
 
 	print "=== Policy ==="
 	pprint.pprint(agent.P)
@@ -27,7 +27,7 @@ if __name__ == "__main__":
 	for s in xrange(1000):
 	    r, p = agent.executeRandomPolicy()
 	    rHistR.append(r)
-	    # print p
+
 	print "reward (max/min/avg): ", max(rHist), min(rHist), sum(rHist)/float(len(rHist))
 	print "Random reward (max/min/avg): ", max(rHistR), min(rHistR), sum(rHistR)/float(len(rHistR))
 

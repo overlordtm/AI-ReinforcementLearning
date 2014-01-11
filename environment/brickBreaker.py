@@ -10,17 +10,18 @@ class BoxModel:
         self.box = (box_min_x, box_max_x, box_min_y, box_max_y)
 
         self.reset()
-        print "==== BoxModel ====="
-        print "Box:", self.box
-        print "Ball:", self.ball
-        print "Pad:", self.pad
-        print "Bricks", self.bricks
-        print "==== BoxMode END ====="
+        # print "==== BoxModel ====="
+        # print "Box:", self.box
+        # print "Ball:", self.ball
+        # print "Pad:", self.pad
+        # print "Bricks", self.bricks
+        # print "==== BoxMode END ====="
 
     def reset(self):
         (box_min_x, box_max_x, box_min_y, box_max_y) = self.box
         self.pad = int(box_max_x - box_min_x)/2
-        self.ball = (self.pad + 0.5, 0.0, 1, 1.0)
+        self.ball = (self.pad + 0.5, 0.0, 1.0, 1.0)
+        self._normalizeVelocity()
         self.bricks = [1 for _ in xrange(box_min_x, box_max_x)]
 
     def _normalizeVelocity(self):
@@ -182,7 +183,9 @@ class BrickBreakerEnv(Environment):
         else:
             k = None
 
-        return (self.box.pad, k)
+        assert -1 <= vx <= 1
+
+        return (self.box.pad, round(vx, 1))
 
     def do(self, state, action):
 
@@ -237,13 +240,6 @@ class BrickBreakerEnv(Environment):
             isTerminal = True
             self.reset()
 
-        # if self.steps > self.maxSteps:
-        #     print "Out of time"
-        #     reward = -1
-        #     isTerminal = True
-        #     self.reset()
-
-        
         _, _, vx, vy = self.box.ball
 
         if vx != 0:
@@ -251,7 +247,7 @@ class BrickBreakerEnv(Environment):
         else:
             k = None
 
-        newState = (self.box.pad, k)
+        newState = (self.box.pad, round(vx, 1))
         return newState, reward, isTerminal
 
     def getActions(self, state):
