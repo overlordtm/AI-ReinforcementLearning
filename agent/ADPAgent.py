@@ -115,7 +115,7 @@ class ADPActiveAgent(Agent):
                 break
             action = P.get(state)
             if action is None:
-                print "WARNING: No action for state %s in policy" % repr(state)
+                # print "WARNING: No action for state %s in policy" % repr(state)
                 action = random.choice(self.e.getActions(state))
             assert action is not None, state
             state, reward, terminal = self.e.do(state, action)

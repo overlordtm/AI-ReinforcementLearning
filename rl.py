@@ -7,9 +7,9 @@ import pprint
 if __name__ == "__main__":
 	# env = MazeEnv()
 	env = BrickBreakerEnv(3)
-	agent = ADPActiveAgent(env, gamma=0.2, Rplus=15, Ne=5, maxPolicyIter=1000)
+	agent = ADPActiveAgent(env, gamma=0.5, Rplus=10, Ne=5, maxPolicyIter=5000)
 
-	agent.train(20)
+	agent.train(40)
 
 	print "=== Policy ==="
 	pprint.pprint(agent.P)
@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
 def bench():
 
-	config = [(reps, g/10.0, Rplus, Ne) for reps in xrange(10, 101, 20) for g in xrange(1,10) for Rplus in [1,5,10] for Ne in [1,2,3,5,10]]
+	config = [(reps, g, Rplus, Ne) for reps in [10, 30, 50] for g in [0.1, 0.3, 0.5, 0.8, 0.9] for Rplus in [1,10] for Ne in [1,2,5,10]]
 
 	for c in config:
 		reps, gamma, Rplus, Ne = c
