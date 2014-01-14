@@ -9,6 +9,7 @@
 \usepackage{color}
 \usepackage{listings}
 \usepackage{setspace}
+\usepackage{float}
 
 \definecolor{Code}{rgb}{0,0,0}
 \definecolor{Decorators}{rgb}{0.5,0.5,0.5}
@@ -94,27 +95,29 @@ Agent lahko vedno upošteva samo do sedaj naučeno znanje. Tak agent se nikoli n
 	\end{array}
 \right.\]
 
-Psevdo koda za našega agenta je prikazana v razdelku 
+V razdelku \ref{koda} predstavimo osnovni algoritem za Active ADP agent with policy iteration in glavne metode, ki vplivajo na delovanje algoritma.
 
 \section{Okolje}
 Za okolje smo si izbrali igro Brick breaker. Gre za igro kjer je na spodnjem delu zaslona ploščica, na zgornjem delu zaslona opeke, vmes pa je žogica, ki se odbija. Naša naloga je, da premikamo ploščico levo in desno tako, da žogica razbije čimveč opek naenkrat (Slika 1). Igro zmagamo, ko razbijemo vse opeke, ali izgubimo če se žogica ne odbije od ploščice ampak "pade na tla". 
 
-\subsection{Stanja in akcije}
-Okolje igre Brick breaker je v splošnem nedeterministično in kompleksno, zato smo ga zelo poenostavili. Pri običajni igri Brick breaker je lahko v času \textit{T} ploščica na katerikoli poziciji. Vsako stanje je predstavljeno kot tri-terica:
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{brick.jpg}
+\caption{Brick breaker igra}
+\end{figure}
 
+\subsection{Stanja in akcije}
+Okolje igre Brick breaker je v splošnem nedeterministično in kompleksno, zato smo ga zelo poenostavili. Vsako stanje je predstavljeno kot tri-terica:
 \[
 	(x_{pad}, v_x > 0, bricks)
 \]
-
 kjer je $x_{pad}$ pozicija ploščice, $v_x$ x-komponenta hitrosti žogice ($v_x>0$ indicira samo smer, drugače število stanj zelo hitro zraste) in $bricks$ bitni vektor, ki indicira katere opeke so že razbite.
-V vsakem stanju se agent odloči za eno od akcij ki so predstavljene kot pari:
 
+V vsakem stanju se agent odloči za eno od akcij ki so predstavljene kot pari:
 \[
 (x_{pad}, d)
 \]
-
 kjer je $x_{pad}$ nova pozicija ploščice in $d \in \{<, >, .\}$ korekcija smeri žogice. 
-
 
 Pozicija žogice je predstavljena s seznamom:
 \[
@@ -139,20 +142,30 @@ Nagrade smo definirali za razbitje opeke, za zmago, za poraz in majhno negativno
 \end{tabular}
 \end{center}
 
-\begin{figure}
-\centering
-\includegraphics[width=0.5\textwidth]{brick.jpg}
-\caption{Brick breaker igra}
-\end{figure}
 
 \section{Rezultati}
 
-Zaradi narave okolja 
+Zaradi narave okolja učenje traja veliko časa, zato je število korakov učenja (iteracij) omejeno na 50. Po vsakem procesu učenja smo preizkusili algoritem v 1000 igrah. V tabeli \ref{table:resultsx} so prikazani rezultati po vsakem procesu učenja, za različne parametre. Rezultati predstavljajo minimalno, maksimalno in povprečno nagrado skozi 1000 izvajanj algoritma.
 
-\begin{table}[h!]
+Za referenco uporabimo rezultate algoritma, kjer agent na vsakem koraku izvede naključno akcijo. Rezultati takega algoritma so predstavljeni v tabeli \ref{table:rnd}.
+
+Graf na sliki \ref{fig:res} predstavlja uspešnost učenja v odvisnosti od parametra $\gamma$. Rezultati kažejo da je algoritem uspešnejši pri manjši vrednosti $\gamma$, kar pomeni da da večji pomen trenutni nagradi in manjši pomen nagradam, ki se mu obetajo.
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|c|c|c|}
+    \hline
+    Najboljša nagrada & Najslabša nagrada & Povprečna nagrada \\\hline
+    10,1 & -10,4166666667 & -4,6845741667 \\\hline
+    \end{tabular}
+   	\caption{Rezutlati naključnega algoritma}
+    \label{table:rnd}
+\end{table}
+
+\begin{table}[H]
   \begin{tabular}{|c|c|c|c|c|}
   \hline
-  Iteracij & $\gamma$ & Najbolsa Nagrada & Najslabsa nagrada & Povprecna nagrada \\\hline
+  Iteracij & $\gamma$ & Najboljša Nagrada & Najslabša nagrada & Povprečna nagrada \\\hline
   30         & 0,1   & 10          & -10,4        & 9,9196         \\
   30         & 0,3   & 10          & -10,3        & 9,9798         \\
   30         & 0,5   & 10          & -10,1        & 0,3777         \\
@@ -163,17 +176,21 @@ Zaradi narave okolja
   50         & 0,9   & 10          & -10,3        & 0,8216        \\\hline
   \end{tabular}
   \caption{Rezultati}
+  \label{table:resultsx}
 \end{table}
-\begin{figure}[h!]
+
+\begin{figure}[H]
   \centering
   \includegraphics[width=1.0\textwidth]{graf.png}
-  \caption{Povprecna nagrada v odvisnosti od parametra $\gamma$}
+  \caption{Povprečna nagrada v odvisnosti od parametra $\gamma$}
+  \label{fig:res}
 \end{figure}
 
 
 
 \section{Dodatek A}
-\begin{figure}[htb]
+\label{koda}
+\begin{figure}[H]
 \begin{python}
 def ADPAgent(env):
 	model = Model()
@@ -195,7 +212,7 @@ def ADPAgent(env):
 \caption{Psevdo koda v Pythonu za ADP agenta}
 \end{figure}
 
-\begin{figure}[htb]
+\begin{figure}[H]
 \begin{python}
 def policyIteration(model, env):
     U = zeroUtilities(model)
@@ -215,7 +232,7 @@ def policyIteration(model, env):
 \caption{Psevdo koda v Pythonu za policy iteration}
 \end{figure}
 
-\begin{figure}[htb]
+\begin{figure}[H]
 \begin{python}
 def valueDetermination(P, U, model, k = 10):
     R = lambda s: model.avgReward(state) or 0
