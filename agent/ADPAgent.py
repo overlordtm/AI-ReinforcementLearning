@@ -150,9 +150,10 @@ class ADPActiveAgent(Agent):
     def train(self, k = 10):
         for i in xrange(k):
             start = int(time.time())
-            print "======== TRAINING SEQUENCE %d START ========" % i
+            # print "======== TRAINING SEQUENCE %d START ========" % i
             self.start()
-            print "== TRAINING SEQUENCE %d  (took %d seconds) (size: %d) ==" % (i, int(time.time())-start, len(self.model.T))
+            pprint.pprint(self.U)
+            # print "== TRAINING SEQUENCE %d  (took %d seconds) (size: %d) ==" % (i, int(time.time())-start, len(self.model.T))
 
     def start(self):
 
@@ -204,6 +205,7 @@ class ADPActiveAgent(Agent):
                     P[s] = a
                     converged = False
             # print "Policy iteration done"
+        self.U = U
         return P
 
     def valueDetermination(self, P, U, model, k = 10):
