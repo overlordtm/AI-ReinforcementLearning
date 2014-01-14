@@ -89,6 +89,7 @@ class ADPActiveAgent(Agent):
 
         self.model = Model()
 
+        self.UHist = []
         self.P = None
         self.e = e
         self.gamma = gamma
@@ -152,7 +153,7 @@ class ADPActiveAgent(Agent):
             start = int(time.time())
             # print "======== TRAINING SEQUENCE %d START ========" % i
             self.start()
-            pprint.pprint(self.U)
+            self.UHist.append(self.U.copy())
             # print "== TRAINING SEQUENCE %d  (took %d seconds) (size: %d) ==" % (i, int(time.time())-start, len(self.model.T))
 
     def start(self):
@@ -163,7 +164,6 @@ class ADPActiveAgent(Agent):
         terminal = False
         self.steps = 0
 
-        utilHist = {}
 
         while terminal is False:
             action = self.lastAction

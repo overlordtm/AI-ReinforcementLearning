@@ -9,17 +9,30 @@ if __name__ == "__main__":
 	env = BrickBreakerEnv(3)
 	agent = ADPActiveAgent(env, gamma=0.3, Rplus=1, Ne=2, maxPolicyIter=5000)
 
-	agent.train(40)
+	agent.train(30)
 
 	print "=== Policy ==="
-	pprint.pprint(agent.P)
+	# pprint.pprint(agent.UHist)
+
+	s = set()
+
+	for U in agent.UHist:
+		for k in U.keys():
+			s.add(k)
+
+	f = list(s)
+
+	print "\t".join(map(repr,f))
+
+	print "\t".join(str(U.get(f, 0)) for f in U for U in agent.UHist)
+
+
 	print "=== Policy END ==="
 
 	rHist = []
 	for s in xrange(1000):
 	    r, p = agent.executePolicy()
 	    rHist.append(r)
-	    # print len(p)
 
 	rHistR = []
 
@@ -40,10 +53,6 @@ def bench():
 		agent = ADPActiveAgent(env, gamma = gamma, Rplus = Rplus, Ne = Ne, maxPolicyIter = 2500)
 
 		agent.train(reps)
-
-		# print "=== Policy ==="
-		# pprint.pprint(agent.P)
-		# print "=== Policy END ==="
 
 		rHist = []
 		for s in xrange(1000):
