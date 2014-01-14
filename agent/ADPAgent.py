@@ -89,6 +89,7 @@ class ADPActiveAgent(Agent):
 
         self.model = Model()
 
+        self.UHist = []
         self.P = None
         self.e = e
         self.gamma = gamma
@@ -115,7 +116,7 @@ class ADPActiveAgent(Agent):
                 break
             action = P.get(state)
             if action is None:
-                print "WARNING: No action for state %s in policy" % repr(state)
+                # print "WARNING: No action for state %s in policy" % repr(state)
                 action = random.choice(self.e.getActions(state))
             assert action is not None, state
             state, reward, terminal = self.e.do(state, action)
@@ -150,9 +151,10 @@ class ADPActiveAgent(Agent):
     def train(self, k = 10):
         for i in xrange(k):
             start = int(time.time())
-            print "======== TRAINING SEQUENCE %d START ========" % i
+            # print "======== TRAINING SEQUENCE %d START ========" % i
             self.start()
-            print "== TRAINING SEQUENCE %d  (took %d seconds) (size: %d) ==" % (i, int(time.time())-start, len(self.model.T))
+            self.UHist.append(self.U.copy())
+            # print "== TRAINING SEQUENCE %d  (took %d seconds) (size: %d) ==" % (i, int(time.time())-start, len(self.model.T))
 
     def start(self):
 
@@ -162,7 +164,6 @@ class ADPActiveAgent(Agent):
         terminal = False
         self.steps = 0
 
-        utilHist = {}
 
         while terminal is False:
             action = self.lastAction
@@ -204,6 +205,7 @@ class ADPActiveAgent(Agent):
                     P[s] = a
                     converged = False
             # print "Policy iteration done"
+        self.U = U
         return P
 
     def valueDetermination(self, P, U, model, k = 10):
